@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torres de Hanoi</title>
+    <style>
+        /* ... (mantener los estilos anteriores hasta .win-message) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .controls {
+            margin: 2rem 0;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            background: #4a90e2;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #357abd;
+        }
+
+        select {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: none;
+        }
+
+        .game-container {
+            margin: 3rem 0;
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            min-height: 300px;
+        }
+
+        .towers {
+            display: flex;
+            justify-content: space-around;
+            gap: 6rem;
+            margin-bottom: 3rem;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tower {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            width: 200px;
+            height: 220px;
+        }
+
+        .tower::before {
+            content: '';
+            width: 20px;
+            height: 200px;
+            background: #666;
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .tower::after {
+            content: '';
+            width: 200px;
+            height: 20px;
+            background: #666;
+            position: absolute;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .disk {
+            height: 30px;
+            background: #4a90e2;
+            border-radius: 15px;
+            margin: 2px 0;
+            transition: width 0.3s, background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            z-index: 2;
+            font-size: 0.9rem;
+        }
+
+        .disk.selected {
+            background: #45c937;
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats p {
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        .win-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(26, 26, 46, 0.95);
+            padding: 3rem;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            min-width: 300px;
+            z-index: 1000;
+        }
+
+        .win-message h2 {
+            margin-bottom: 2rem;
+            color: #45c937;
+        }
+
+        .win-message p {
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+
+        .win-message button {
+            margin-top: 2rem;
+        }
+
+        .win-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .towers {
+                gap: 2rem;
+                padding: 0 1rem;
+            }
+
+            .tower {
+                width: 150px;
+            }
+
+            .tower::after {
+                width: 150px;
+            }
+
+            .disk {
+                font-size: 0.8rem;
+            }
+
+            .stats {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+
+            .towers {
+                gap: 1rem;
+            }
+
+            .tower {
+                width: 100px;
+            }
+
+            .tower::after {
+                width: 100px;
+            }
+
+            .disk {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Torres de Hanoi</h1>
+    </header>
+
+    <div class="controls">
+        <button id="newGameBtn">Nuevo Juego</button>
+        <select id="diskCount">
+            <option value="3">3 discos</option>
+            <option value="4">4 discos</option>
+            <option value="5">5 discos</option>
+            <option value="6">6 discos</option>
+        </select>
+    </div>
+
+    <div class="game-container">
+        <div class="towers">
+            <div class="tower" data-tower="1"></div>
+            <div class="tower" data-tower="2"></div>
+            <div class="tower" data-tower="3"></div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <p>Movimientos: <span id="moveCount">0</span></p>
+        <p>Tiempo: <span id="timer">00:00</span></p>
+    </div>
+
+    <div class="win-message">
+        <h2>¡Felicitaciones!</h2>
+        <p>Has completado el juego en <span id="finalMoves">0</span> movimientos</p>
+        <p>Tiempo: <span id="finalTime">00:00</span></p>
+        <button id="playAgainBtn">Jugar de nuevo</button>
+    </div>
+
+    <script>
+        class HanoiGame {
+            constructor(diskCount = 3) {
+                this.towers = [[], [], []];
+                this.selectedDisk = null;
+                this.selectedTower = null;
+                this.moves = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+                this.isGameWon = false;
+                this.initialize(diskCount);
+                this.setupEventListeners();
+            }
+
+            initialize(diskCount) {
+                this.resetGame();
+
+                // Nuevo cálculo de anchos
+                const minWidth = 60;  // Ancho para el disco más pequeño (1)
+                const maxWidth = 160; // Ancho para el disco más grande
+                const widthIncrement = (maxWidth - minWidth) / (diskCount - 1);
+
+                // Crear discos iniciales en la primera torre
+                for (let i = diskCount; i > 0; i--) {
+                    // Ahora el disco 1 será el más pequeño
+                    const width = Math.floor(minWidth + ((i - 1) * widthIncrement));
+                    // Insertamos al principio para mantener el orden visual correcto
+                    this.towers[0].push({ width, value: i });
+                }
+
+                this.render();
+                this.startTimer();
+            }
+
+            resetGame() {
+                this.towers = [[], [], []];
+                this.selectedDisk = null;
+                this.selectedTower = null;
+                this.moves = 0;
+                this.isGameWon = false;
+                document.getElementById('moveCount').textContent = '0';
+                document.querySelector('.win-message').classList.remove('show');
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                this.startTime = null;
+                document.getElementById('timer').textContent = '00:00';
+            }
+
+            startTimer() {
+                this.startTime = new Date();
+                this.timerInterval = setInterval(() => {
+                    if (!this.isGameWon) {
+                        const now = new Date();
+                        const diff = Math.floor((now - this.startTime) / 1000);
+                        const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+                        const seconds = (diff % 60).toString().padStart(2, '0');
+                        document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+                    }
+                }, 1000);
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.tower').forEach(tower => {
+                    tower.addEventListener('click', (e) => {
+                        const towerIndex = parseInt(e.currentTarget.dataset.tower) - 1;
+                        this.handleTowerClick(towerIndex);
+                    });
+                });
+
+                document.getElementById('newGameBtn').addEventListener('click', () => {
+                    const diskCount = parseInt(document.getElementById('diskCount').value);
+                    this.initialize(diskCount);
+                });
+
+                document.getElementById('playAgainBtn').addEventListener('click', () => {
+                    const diskCount = parseInt(document.getElementById('diskCount').value);
+                    this.initialize(diskCount);
+                });
+            }
+
+            handleTowerClick(towerIndex) {
+                if (this.isGameWon) return;
+
+                if (this.selectedTower === null) {
+                    if (this.towers[towerIndex].length === 0) return;
+                    this.selectedTower = towerIndex;
+                    this.selectedDisk = this.towers[towerIndex][this.towers[towerIndex].length - 1];
+                    this.render();
+                } else {
+                    if (this.isValidMove(towerIndex)) {
+                        this.moveDisc(towerIndex);
+                        this.moves++;
+                        document.getElementById('moveCount').textContent = this.moves;
+                        if (this.checkWin()) {
+                            this.handleWin();
+                        }
+                    }
+                    this.selectedTower = null;
+                    this.selectedDisk = null;
+                    this.render();
+                }
+            }
+
+            isValidMove(targetTower) {
+                if (this.towers[targetTower].length === 0) return true;
+                const topDisk = this.towers[targetTower][this.towers[targetTower].length - 1];
+                return this.selectedDisk.value < topDisk.value;
+            }
+
+            moveDisc(targetTower) {
+                const disk = this.towers[this.selectedTower].pop();
+                this.towers[targetTower].push(disk);
+            }
+
+            checkWin() {
+                return this.towers[2].length === parseInt(document.getElementById('diskCount').value);
+            }
+
+            handleWin() {
+                this.isGameWon = true;
+                clearInterval(this.timerInterval);
+                const winMessage = document.querySelector('.win-message');
+                document.getElementById('finalMoves').textContent = this.moves;
+                document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
+                winMessage.classList.add('show');
+            }
+
+            render() {
+                document.querySelectorAll('.tower').forEach((tower, index) => {
+                    tower.innerHTML = '';
+                    this.towers[index].forEach((disk, diskIndex) => {
+                        const diskElement = document.createElement('div');
+                        diskElement.className = 'disk';
+                        if (index === this.selectedTower && diskIndex === this.towers[index].length - 1) {
+                            diskElement.classList.add('selected');
+                        }
+                        diskElement.style.width = `${disk.width}px`;
+                        diskElement.textContent = disk.value;
+                        tower.appendChild(diskElement);
+                    });
+                });
+            }
+        }
+
+        // Iniciar el juego
+        const game = new HanoiGame();
+    </script>
+</body>
+
+</html>
